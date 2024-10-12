@@ -2,9 +2,37 @@ import { nosqlite } from "../src/index";
 import sqlite3 from "sqlite3";
 import * as fs from "fs";
 import { before } from "node:test";
+import { nolite } from "../src/core/nolite";
 
 describe("nosqlite", () =>
 {
+
+  const validPath = "./testDir/test.db";
+  const invalidPath = "./soDamnInvalid/invalid.db";
+  const invalidMemoryPath = ":memory:test.db";
+  const existingFilePath = "./existingDir/existing.db";
+  const pathEndingWithSlash = "./testDir/";
+
+  afterAll(() =>
+  {
+    if (fs.existsSync(validPath))
+    {
+      fs.rmSync(validPath);
+    }
+    if (fs.existsSync(existingFilePath))
+    {
+      fs.rmSync(existingFilePath);
+    }
+    if (fs.existsSync("./testDir"))
+    {
+      fs.rmSync("./testDir", { recursive: true });
+    }
+    if (fs.existsSync("./existingDir"))
+    {
+      fs.rmSync("./existingDir", { recursive: true });
+    }
+  });
+
   describe("nosqlite.Getter", () =>
   {
     let instance: nosqlite;
@@ -41,10 +69,7 @@ describe("nosqlite", () =>
   });
   describe("nosqlite.InFile", () =>
   {
-    const validPath = "./testDir/test.db";
-    const invalidMemoryPath = ":memory:test.db";
-    const existingFilePath = "./existingDir/existing.db";
-    const pathEndingWithSlash = "./testDir/";
+
 
     beforeEach(() =>
     {
@@ -93,45 +118,42 @@ describe("nosqlite", () =>
   });
   describe("nosqlite.FromFile", () =>
   {
-    const invalidPath: string = "./invalid/invalid.db";
-    const validPath: string = "./validDir/validTest.db";
-    const validPathDir: string = "./validDir";
 
     beforeEach(() =>
     {
+      // Clean up before each test
       if (fs.existsSync(validPath))
       {
         fs.rmSync(validPath);
       }
-      if (fs.existsSync(validPathDir))
+      if (fs.existsSync(existingFilePath))
       {
-        fs.rmdirSync(validPathDir, { recursive: true });
+        fs.rmSync(existingFilePath);
       }
-      fs.mkdirSync(validPathDir, { recursive: true });
-    });
-
-    afterEach(() =>
-    {
-      if (fs.existsSync(validPath))
+      if (fs.existsSync("./testDir"))
       {
-        fs.rmSync(validPath);
+        fs.rmSync("./testDir", { recursive: true });
       }
-      if (fs.existsSync(validPathDir))
+      if (fs.existsSync("./existingDir"))
       {
-        fs.rmdirSync(validPathDir, { recursive: true });
+        fs.rmSync("./existingDir", { recursive: true });
       }
     });
-
 
     test("should throw an error when passing invalid path", () =>
     {
       expect(() => nosqlite.FromFile(invalidPath)).toThrow("Database file not found");
     });
+    async function sleep(ms: number): Promise<void>
+    {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
 
     test("should create a database from existing file", async () =>
     {
       const origin = nosqlite.InFile(validPath);
-      await origin.close();
+      origin.close();
+      await sleep(2);
       const instance = nosqlite.FromFile(validPath);
       expect(instance).toBeInstanceOf(nosqlite);
     });
