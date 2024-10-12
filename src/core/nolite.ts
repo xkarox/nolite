@@ -46,13 +46,18 @@ export class nolite
       throw new Error("Path cannot end with /");
     }
     // only create if path is in a subdir
-    const success = fs.mkdirSync(path.substring(0, path.lastIndexOf("/")), {
-      recursive: true,
-    });
-    if (success == undefined || success == null)
+    const directory = path.substring(0, path.lastIndexOf("/"));
+    if (directory != "./")
     {
-      throw new Error("Failed to create directory");
+      const success = fs.mkdirSync(directory, {
+        recursive: true,
+      });
+      if (success == undefined || success == null)
+      {
+        throw new Error("Failed to create directory");
+      }
     }
+
     const instance = new nolite(path);
     return instance;
   }
@@ -82,7 +87,11 @@ export class nolite
           created INTEGER NOT NULL,
           updated INTEGER NOT NULL,
           UNIQUE(path)
-        );`);
+        );`, (result: sqlite3.RunResult, err: Error | null) =>
+      {
+        console.log(result);
+        console.log(err);
+      });
     });
   }
 
@@ -189,7 +198,7 @@ export class nolite
     this.checkDatabaseInitialized();
     this.validatePathForRead(path);
 
-    let prefix: String;
+    let prefix: string;
     if (path.endsWith("/"))
     {
       prefix = path + "%";
